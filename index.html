@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drop Everything - HTML-in-Canvas Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      color: #e8e8f0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 640px;
+      padding: 40px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(134, 59, 255, 0.15);
+      color: #b07aff;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(134, 59, 255, 0.3);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 0%, #b07aff 50%, #47bfff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    p {
+      font-size: 17px;
+      line-height: 1.7;
+      color: #9898a8;
+      margin-bottom: 16px;
+    }
+
+    .bookmarklet-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 32px 0;
+      padding: 18px 36px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #863bff, #47bfff);
+      border: none;
+      border-radius: 14px;
+      text-decoration: none;
+      cursor: grab;
+      box-shadow: 0 4px 24px rgba(134, 59, 255, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .bookmarklet-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 32px rgba(134, 59, 255, 0.5);
+    }
+
+    .steps {
+      margin: 32px 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: step;
+    }
+    .steps li {
+      counter-increment: step;
+      padding: 12px 0;
+      font-size: 16px;
+      color: #b0b0c0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .steps li::before {
+      content: counter(step);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 12px;
+      background: rgba(134, 59, 255, 0.15);
+      color: #b07aff;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 50%;
+    }
+
+    code {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #d0d0e0;
+    }
+
+    .warn {
+      display: block;
+      margin-top: 32px;
+      padding: 16px 20px;
+      background: rgba(255, 180, 50, 0.08);
+      border: 1px solid rgba(255, 180, 50, 0.2);
+      border-radius: 12px;
+      color: #ccaa55;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .try-here {
+      margin-top: 24px;
+    }
+    .try-here button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #b07aff;
+      background: rgba(134, 59, 255, 0.1);
+      border: 1px solid rgba(134, 59, 255, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .try-here button:hover {
+      background: rgba(134, 59, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <span class="badge">Experimental Chrome API</span>
+  <h1>Drop Everything</h1>
+  <p>
+    A bookmarklet that turns any webpage into a physics playground.
+    Every word becomes a solid body that falls and bounces,
+    rendered with the new <strong>HTML-in-Canvas</strong> API.
+  </p>
+
+  <a class="bookmarklet-link" id="bookmarklet" href="#">
+    Drop Everything
+  </a>
+  <p style="font-size: 14px; color: #666;">Drag the button above to your bookmarks bar.</p>
+
+  <ol class="steps">
+    <li>Enable <code>chrome://flags/#canvas-draw-element</code> in Chrome Canary</li>
+    <li>Drag the <strong>Drop Everything</strong> button to your bookmarks bar</li>
+    <li>Navigate to any webpage (Wikipedia, news sites, etc.)</li>
+    <li>Click the bookmarklet and watch everything fall</li>
+  </ol>
+
+  <div class="try-here">
+    <button id="try-btn">Try it on this page</button>
+  </div>
+
+  <small class="warn">
+    Requires Chrome Canary with <code>chrome://flags/#canvas-draw-element</code> enabled.
+    The bookmarklet loads <code>drop.js</code> from this server.
+  </small>
+</div>
+
+<script>
+  // Build bookmarklet href — injects drop.js from the current host
+  const scriptUrl = new URL('/drop.js', location.href).href;
+  const bookmarkletCode = `javascript:void(fetch('${scriptUrl}').then(r=>r.text()).then(t=>eval(t)))`;
+  document.getElementById('bookmarklet').href = bookmarkletCode;
+
+  // Try on this page
+  document.getElementById('try-btn').addEventListener('click', () => {
+    const s = document.createElement('script');
+    s.src = '/drop.js';
+    document.body.appendChild(s);
+  });
+</script>
+
+</body>
+</html>
